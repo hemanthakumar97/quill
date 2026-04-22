@@ -1,7 +1,7 @@
 import Foundation
 
 final class JournalManager {
-    private let vaultJournalPath = "/Volumes/Hemanth/Obsidian Vault/Journal"
+    private var vaultJournalPath: String { ConfigManager.shared.config.journalPath }
 
     func journalFilePath(for date: Date = Date()) -> URL {
         let calendar = Calendar.current
@@ -41,7 +41,7 @@ final class JournalManager {
     }
 
     func isVaultMounted() -> Bool {
-        FileManager.default.fileExists(atPath: "/Volumes/Hemanth/Obsidian Vault")
+        FileManager.default.fileExists(atPath: vaultJournalPath)
     }
 
     func appendEntry(_ text: String, date: Date = Date()) throws {

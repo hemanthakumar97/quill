@@ -2,9 +2,9 @@ import Foundation
 import Combine
 
 struct ModelOption: Identifiable, Hashable {
-    let id: String
-    let label: String
-    let tier: String
+    let id: String       // API model ID sent in requests
+    let label: String    // Display name shown in the picker
+    let tier: String     // Flagship / Balanced / Fast
 }
 
 enum AIProvider: String, CaseIterable, Codable {
@@ -21,6 +21,7 @@ enum AIProvider: String, CaseIterable, Codable {
 
     var requiresAPIKey: Bool { self != .ollama }
 
+    // Curated list — only shown in each provider's chat UI
     var curatedModels: [ModelOption] {
         switch self {
         case .claude:
@@ -37,13 +38,13 @@ enum AIProvider: String, CaseIterable, Codable {
             ]
         case .gemini:
             return [
-                ModelOption(id: "gemini-3.1-pro-preview",       label: "Gemini 3.1 Pro",        tier: "Flagship"),
-                ModelOption(id: "gemini-3-flash-preview",       label: "Gemini 3 Flash",         tier: "Balanced"),
+                ModelOption(id: "gemini-3.1-pro-preview",      label: "Gemini 3.1 Pro",       tier: "Flagship"),
+                ModelOption(id: "gemini-3-flash-preview",      label: "Gemini 3 Flash",        tier: "Balanced"),
                 ModelOption(id: "gemini-3.1-flash-lite-preview", label: "Gemini 3.1 Flash Lite", tier: "Fast"),
-                ModelOption(id: "gemini-2.5-flash",             label: "Gemini 2.5 Flash",       tier: "Stable"),
+                ModelOption(id: "gemini-2.5-flash",            label: "Gemini 2.5 Flash",      tier: "Stable"),
             ]
         case .ollama:
-            return []
+            return []  // fetched dynamically
         }
     }
 
@@ -108,6 +109,7 @@ struct AppConfig: Codable {
     var apiKeys: [String: String] = [:]
     var selectedModels: [String: String] = [:]
     var ollamaHost: String    = "http://localhost:11434"
+    var journalPath: String   = "/Volumes/Hemanth/Obsidian Vault/Journal"
 
     func apiKey(for p: AIProvider) -> String { apiKeys[p.rawValue] ?? "" }
     mutating func setApiKey(_ key: String, for p: AIProvider) { apiKeys[p.rawValue] = key }

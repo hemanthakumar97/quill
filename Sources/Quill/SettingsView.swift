@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 private enum OllamaFetch {
     case idle, loading, loaded([ModelOption]), failed(String)
@@ -32,6 +33,20 @@ struct SettingsView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
+
+                    section("Journal Path") {
+                        HStack(spacing: 8) {
+                            TextField("Path to journal folder", text: $cfg.config.journalPath)
+                                .textFieldStyle(.roundedBorder)
+                                .truncationMode(.middle)
+                            Button("Browse…") { browseJournalPath() }
+                                .buttonStyle(.bordered)
+                        }
+                        Text("Folder where daily markdown files are saved.")
+                            .font(.caption).foregroundColor(.secondary)
+                    }
+
+                    Divider()
 
                     Toggle("Enable AI polishing", isOn: $cfg.config.aiEnabled)
                         .toggleStyle(.switch)
@@ -135,6 +150,7 @@ struct SettingsView: View {
         if provider == .ollama {
             ollamaModelSection
         } else {
+            // Curated list — shown instantly, no network call needed
             let models = provider.curatedModels
             Picker("", selection: curatedModelBinding(models: models)) {
                 ForEach(models) { m in
@@ -149,6 +165,7 @@ struct SettingsView: View {
             .pickerStyle(.menu)
             .labelsHidden()
             .onAppear {
+                // Auto-select balanced model if nothing chosen yet
                 if cfg.config.selectedModel(for: provider).isEmpty {
                     cfg.config.setSelectedModel(provider.defaultModelID, for: provider)
                 }
@@ -198,6 +215,17 @@ struct SettingsView: View {
     }
 
     // MARK: Helpers
+
+    private func browseJournalPath() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.canCreateDirectories = true
+        panel.prompt = "Select Folder"
+        if panel.runModal() == .OK, let url = panel.url {
+            cfg.config.journalPath = url.path
+        }
+    }
 
     private func fetchOllamaModels() {
         let host = cfg.config.ollamaHost
