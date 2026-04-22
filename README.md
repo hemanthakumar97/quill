@@ -1,88 +1,115 @@
 # Quill
 
-A lightweight macOS menu bar journaling app. Click the icon, write a thought, press Return — and it's saved to your Obsidian vault. Optionally, let an AI model polish the entry before it hits disk.
-
-**Requires macOS 14 (Sonoma) or later.**
+A lightweight journaling tool for capturing quick thoughts with optional AI polish. Available for macOS (menu bar) and Android (home screen widget).
 
 ---
 
-## Installation
+## Platforms
 
-### Prerequisites
+### macOS — Menu Bar App
+Lives in the menu bar. Click the icon, type, press Return — entry saved to your Obsidian vault.
 
-You need Xcode Command Line Tools. If you haven't installed them:
+**Requires macOS 14 (Sonoma) or later.**
+
+#### Prerequisites
 
 ```bash
 xcode-select --install
 ```
 
-### Install
-
-Clone the repo, then run the installer:
+#### Install
 
 ```bash
 git clone https://github.com/hemanthakumar97/quill.git
-cd quill
+cd quill/macos
 bash install.sh
 ```
 
-The script will:
-1. Build a release binary with Swift
-2. Bundle it into `Quill.app`
-3. Install it to `~/Applications/Quill.app`
-4. Launch the app immediately
-5. Attempt to add it to Login Items so it auto-starts on reboot
+The script builds a release binary, bundles it as `Quill.app`, installs to `~/Applications/`, and adds it to Login Items.
 
-Once launched, you'll see a book icon (📄) in your menu bar.
+#### Updating
 
-### Updating
+Pull the latest changes and re-run `bash macos/install.sh`.
 
-Pull the latest changes and re-run `bash install.sh`. It stops any running instance, rebuilds, and reinstalls automatically.
+---
+
+### Android — Home Screen Widget
+A `4×1` widget on your home screen. Tap it → type your entry → save. Entries are stored locally on the device.
+
+**Requires Android 8.0 (API 26) or later.**
+
+#### Build & Install
+
+Open the `android/` folder in Android Studio. It will auto-download Gradle and dependencies. Connect your phone via USB with USB Debugging enabled, then click **Run**.
+
+To build an APK for side-loading:
+
+```bash
+cd android
+./gradlew assembleDebug
+# APK at: app/build/outputs/apk/debug/app-debug.apk
+```
 
 ---
 
 ## Journal Storage
 
-Entries are saved as markdown files inside your Obsidian vault:
+### macOS
+Entries are saved to your Obsidian vault (configurable in Settings):
 
 ```
-/Volumes/Hemanth/Obsidian Vault/Journal/
+/Your/Vault/Journal/
 └── 2026/
     └── Apr-2026.md
 ```
 
-Each file uses day-level `##` headers and time-stamped `###` entry blocks, so everything stays readable in Obsidian without any plugin.
+### Android
+Entries are saved locally on the device:
 
-> **Note:** The vault path is currently hardcoded. If your vault lives elsewhere, update the path in `Sources/Quill/JournalManager.swift`.
+```
+Android/data/com.hemanth.quill/files/Journal/
+└── 2026/
+    └── Apr-2026.md
+```
+
+Both platforms use the same markdown format — day-level `##` headers and time-stamped `###` entry blocks — so files are readable in Obsidian without any plugin.
+
+> **Note (macOS):** The vault path is configurable in Settings. Default path is hardcoded for first launch.
 
 ---
 
 ## Usage
 
+### macOS
 **Left-click** the menu bar icon to open the journal popover.
 
 | Action | Shortcut |
 |--------|----------|
 | Save entry | **Return** |
 | Insert a newline | **Shift + Return** |
-| Save polished version (AI preview) | **Cmd + Return** |
+| Save polished version | **Cmd + Return** |
 
 **Right-click** the menu bar icon for Settings and Quit.
 
-### AI Polishing (optional)
+### Android
+Tap the **Quill widget** on your home screen → a dialog opens with the keyboard ready. Type your entry and tap **Save** (or **Polish & Save** if AI is enabled).
 
-Open Settings (gear icon or right-click → Settings), toggle **Enable AI polishing**, and pick a provider:
+Access Settings via the gear icon in the entry dialog, or by opening the Quill app from the app drawer.
 
-| Provider | What you need |
-|----------|--------------|
-| **Claude** | API key from [console.anthropic.com](https://console.anthropic.com) → API Keys |
-| **OpenAI** | API key from [platform.openai.com](https://platform.openai.com) → API Keys |
-| **Gemini** | API key from [aistudio.google.com](https://aistudio.google.com) → Get API Key |
-| **Ollama** | Ollama running locally (`ollama serve`) with at least one model pulled |
+---
 
-When AI is enabled, pressing Return sends your draft to the selected model. You'll see a preview of the polished text and can choose to **Save Polished** or **Save Original**.
+## AI Polishing (optional)
 
-#### Polish Modes
+Supports Claude, OpenAI, Gemini, and Ollama. Configure in Settings on each platform.
+
+| Provider | Where to get a key |
+|----------|--------------------|
+| **Claude** | [console.anthropic.com](https://console.anthropic.com) → API Keys |
+| **OpenAI** | [platform.openai.com](https://platform.openai.com) → API Keys |
+| **Gemini** | [aistudio.google.com](https://aistudio.google.com) → Get API Key |
+| **Ollama** | Run locally — `ollama serve` (macOS only) |
+
+### Polish Modes
 
 | Mode | What it does |
 |------|-------------|
@@ -94,4 +121,8 @@ When AI is enabled, pressing Return sends your draft to the selected model. You'
 
 ## Configuration
 
-Settings are stored at `~/.config/Quill/config.json`. You can edit this file directly or use the in-app Settings panel. It holds your selected provider, model, polish mode, and API keys.
+### macOS
+`~/.config/Quill/config.json` — read at launch, written on Settings save.
+
+### Android
+`SharedPreferences` (app-private) — updated via the Settings screen.
