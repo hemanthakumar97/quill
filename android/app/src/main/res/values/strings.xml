@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Quill</string>
+    <string name="widget_name">Quill Journal Widget</string>
+    <string name="widget_description">Quick journal entry from your home screen</string>
+</resources>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:theme="@style/Theme.Quill"
+        android:allowBackup="true"
+        android:supportsRtl="true">
+
+        <!-- Settings / launcher screen -->
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Dialog-style entry screen launched from the widget -->
+        <activity
+            android:name=".ui.QuickEntryActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Quill.Dialog"
+            android:windowSoftInputMode="stateAlwaysVisible|adjustResize"
+            android:launchMode="singleTop"
+            android:excludeFromRecents="true" />
+
+        <!-- Home screen widget receiver -->
+        <receiver
+            android:name=".widget.QuillWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/quill_widget_info" />
+        </receiver>
+
+    </application>
+</manifest>
