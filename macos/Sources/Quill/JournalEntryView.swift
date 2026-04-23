@@ -11,6 +11,7 @@ private enum EntryState {
 struct JournalEntryView: View {
     var onClose: () -> Void
     var onOpenSettings: () -> Void
+    var coordinator: EntryCoordinator = .init()
 
     @State private var entryText = ""
     @State private var state: EntryState = .writing
@@ -38,8 +39,16 @@ struct JournalEntryView: View {
         .animation(.easeInOut(duration: 0.2), value: stateID)
         .onAppear {
             entryText = ""
+            coordinator.pendingText = ""
+            coordinator.isPolishing = false
             state = .writing
             editorFocused = true
+        }
+        .onChange(of: entryText) { _, newText in
+            coordinator.pendingText = newText
+        }
+        .onChange(of: stateID) { _, id in
+            coordinator.isPolishing = (id == 1)
         }
     }
 
@@ -226,6 +235,7 @@ struct JournalEntryView: View {
     private func commit(text: String) {
         do {
             try journal.appendEntry(text)
+            coordinator.pendingText = ""
             state = .saved
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { onClose() }
         } catch {

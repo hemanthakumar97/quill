@@ -50,6 +50,26 @@ class QuickEntryActivity : ComponentActivity() {
                 )
             }
         }
+
+    }
+
+    override fun finish() {
+        when (val state = viewModel.state.value) {
+            is EntryState.Polishing -> return
+            is EntryState.Writing -> {
+                val text = viewModel.entryText.value.trim()
+                if (text.isNotEmpty()) {
+                    viewModel.commitOriginal()
+                    return
+                }
+                super.finish()
+            }
+            is EntryState.Preview -> {
+                viewModel.commitOriginal()
+                return
+            }
+            else -> super.finish()
+        }
     }
 }
 

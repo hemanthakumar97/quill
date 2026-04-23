@@ -1,10 +1,18 @@
 import AppKit
 import SwiftUI
 
+/// Shared mutable state between JournalEntryView and StatusBarController.
+/// Reference type so both sides see live values without bindings.
+final class EntryCoordinator {
+    var isPolishing = false
+    var pendingText = ""
+}
+
 class StatusBarController {
     private var statusItem: NSStatusItem!
     private var popover: NSPopover!
     private var eventMonitor: EventMonitor?
+    private var entryCoordinator = EntryCoordinator()
 
     init() {
         DispatchQueue.main.async { self.setup() }
@@ -22,12 +30,28 @@ class StatusBarController {
         }
 
         popover = NSPopover()
-        popover.behavior = .transient
+        popover.behavior = .applicationDefined
         popover.animates = true
 
         eventMonitor = EventMonitor(mask: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
-            if self?.popover.isShown == true { self?.closePopover() }
+            self?.handleExternalDismiss()
         }
+
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didResignActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.handleExternalDismiss()
+        }
+    }
+
+    private func handleExternalDismiss() {
+        guard popover.isShown else { return }
+        if entryCoordinator.isPolishing { return }
+        let text = entryCoordinator.pendingText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !text.isEmpty { try? JournalManager().appendEntry(text) }
+        closePopover()
     }
 
     // MARK: Click handling
@@ -69,11 +93,13 @@ class StatusBarController {
     }
 
     private func openJournal() {
+        entryCoordinator = EntryCoordinator()
         popover.contentSize = NSSize(width: 440, height: 360)
         popover.contentViewController = NSHostingController(
             rootView: JournalEntryView(
                 onClose: { [weak self] in self?.closePopover() },
-                onOpenSettings: { [weak self] in self?.openSettings() }
+                onOpenSettings: { [weak self] in self?.openSettings() },
+                coordinator: entryCoordinator
             )
         )
         showPopover()
