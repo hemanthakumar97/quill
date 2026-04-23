@@ -28,7 +28,8 @@ final class JournalManager {
 
     func currentTimeString(for date: Date = Date()) -> String {
         let fmt = DateFormatter()
-        fmt.dateFormat = "HH:mm"
+        fmt.locale = Locale.current
+        fmt.dateFormat = "h:mm a"
         return fmt.string(from: date)
     }
 

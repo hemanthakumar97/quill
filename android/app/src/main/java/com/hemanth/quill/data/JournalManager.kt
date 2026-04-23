@@ -66,7 +66,7 @@ class JournalManager(private val context: Context, private val config: ConfigMan
 
     private fun buildBlock(existing: String, date: LocalDate, text: String): String {
         val dayHeader = "## ${date.format(DateTimeFormatter.ofPattern("MMMM d, yyyy"))}"
-        val timeHeader = "### ${LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))}"
+        val timeHeader = "### ${LocalTime.now().format(DateTimeFormatter.ofPattern("h:mm a"))}"
         val trimmed = text.trim()
         return if (existing.contains(dayHeader)) {
             "\n$timeHeader\n$trimmed\n"
