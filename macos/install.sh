@@ -38,14 +38,16 @@ echo "✓ Build complete."
 echo "→ Bundling .app..."
 rm -rf "$APP_BUNDLE"
 mkdir -p "$APP_BUNDLE/Contents/MacOS"
+mkdir -p "$APP_BUNDLE/Contents/Resources"
 cp ".build/release/$APP_NAME" "$APP_BUNDLE/Contents/MacOS/"
 cp "Info.plist" "$APP_BUNDLE/Contents/"
+cp "Resources/AppIcon.icns" "$APP_BUNDLE/Contents/Resources/"
 
 # 5. Install to ~/Applications
 mkdir -p "$DEST"
 rm -rf "$DEST/$APP_BUNDLE"
 cp -R "$APP_BUNDLE" "$DEST/"
-rm -rf "$APP_BUNDLE"
+rm -rf "$APP_BUNDLE"   # clean up local copy
 
 echo "✓ Installed to $DEST/$APP_BUNDLE"
 
