@@ -53,4 +53,7 @@ dependencies {
     implementation(libs.lifecycle.runtime.compose)
 
     implementation(libs.okhttp)
+    implementation(libs.material)
+    implementation(libs.compose.material.icons.extended)
+    implementation(libs.documentfile)
 }

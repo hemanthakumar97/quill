@@ -1,5 +1,9 @@
 package com.hemanth.quill.ui
 
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -15,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.documentfile.provider.DocumentFile
 import com.hemanth.quill.data.AIProvider
 import com.hemanth.quill.data.ConfigManager
 import com.hemanth.quill.data.PolishMode
@@ -30,11 +35,25 @@ fun SettingsScreen(onClose: () -> Unit) {
     var polishMode by remember { mutableStateOf(config.polishMode) }
     var ollamaHost by remember { mutableStateOf(config.ollamaHost) }
     var showKey by remember { mutableStateOf(false) }
+    var journalFolderUri by remember { mutableStateOf(config.journalFolderUri) }
     var draftKeys by remember {
         mutableStateOf(AIProvider.entries.associateWith { config.getApiKey(it) })
     }
     var selectedModels by remember {
         mutableStateOf(AIProvider.entries.associateWith { config.getSelectedModel(it) })
+    }
+
+    val folderPickerLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocumentTree()
+    ) { uri ->
+        uri?.let {
+            context.contentResolver.takePersistableUriPermission(
+                it,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            )
+            config.journalFolderUri = it.toString()
+            journalFolderUri = it.toString()
+        }
     }
 
     Scaffold(
@@ -64,6 +83,43 @@ fun SettingsScreen(onClose: () -> Unit) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
+            // Journal folder
+            SettingsSection("Journal Folder") {
+                val folderName = journalFolderUri?.let {
+                    DocumentFile.fromTreeUri(context, Uri.parse(it))?.name
+                } ?: "Default (app storage)"
+
+                OutlinedTextField(
+                    value = folderName,
+                    onValueChange = {},
+                    readOnly = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    trailingIcon = {
+                        TextButton(onClick = { folderPickerLauncher.launch(null) }) {
+                            Text("Browse")
+                        }
+                    }
+                )
+                if (journalFolderUri != null) {
+                    TextButton(
+                        onClick = {
+                            config.journalFolderUri = null
+                            journalFolderUri = null
+                        },
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Text(
+                            "Reset to default",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            }
+
+            HorizontalDivider()
+
             // AI toggle
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text("Enable AI polishing", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))

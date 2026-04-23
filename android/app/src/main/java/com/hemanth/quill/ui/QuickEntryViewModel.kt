@@ -21,7 +21,7 @@ sealed interface EntryState {
 class QuickEntryViewModel(application: Application) : AndroidViewModel(application) {
 
     val config = ConfigManager(application)
-    private val journal = JournalManager(application)
+    private val journal = JournalManager(application, config)
     private val ai = AIManager()
 
     val entryText = MutableStateFlow("")
