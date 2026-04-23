@@ -1,0 +1,7 @@
+.DS_Store
+.build/
+macos/.build/
+android/app/build/
+android/local.properties
+android/quill.apk
+android/gradlew.bat
