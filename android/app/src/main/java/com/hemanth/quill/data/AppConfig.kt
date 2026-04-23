@@ -20,9 +20,9 @@ enum class AIProvider(val displayName: String, val requiresApiKey: Boolean) {
                 ModelOption("gpt-4o-mini", "GPT-4o mini", "Balanced"),
             )
             GEMINI -> listOf(
-                ModelOption("gemini-1.5-pro", "Gemini 1.5 Pro", "Flagship"),
-                ModelOption("gemini-1.5-flash", "Gemini 1.5 Flash", "Balanced"),
-                ModelOption("gemini-2.0-flash", "Gemini 2.0 Flash", "Fast"),
+                ModelOption("gemini-3.1-pro-preview", "Gemini 3.1 Pro", "Flagship"),
+                ModelOption("gemini-3-flash-preview", "Gemini 3 Flash", "Balanced"),
+                ModelOption("gemini-2.5-flash", "Gemini 2.5 Flash", "Fast"),
             )
             OLLAMA -> emptyList()
         }

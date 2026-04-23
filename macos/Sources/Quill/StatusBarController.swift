@@ -30,6 +30,8 @@ class StatusBarController {
         }
     }
 
+    // MARK: Click handling
+
     @objc private func handleClick(_ sender: NSStatusBarButton?) {
         guard let event = NSApp.currentEvent else { return }
         if event.type == .rightMouseUp {
@@ -56,6 +58,8 @@ class StatusBarController {
         statusItem.menu = nil
     }
 
+    // MARK: Journal
+
     private func toggleJournal() {
         if popover.isShown {
             closePopover()
@@ -75,6 +79,8 @@ class StatusBarController {
         showPopover()
     }
 
+    // MARK: Settings
+
     @objc func openSettings() {
         if popover.isShown { closePopover() }
         popover.contentSize = NSSize(width: 440, height: 420)
@@ -83,6 +89,8 @@ class StatusBarController {
         )
         showPopover()
     }
+
+    // MARK: Popover lifecycle
 
     private func showPopover() {
         guard let button = statusItem.button else { return }
@@ -96,6 +104,8 @@ class StatusBarController {
         eventMonitor?.stop()
     }
 }
+
+// MARK: EventMonitor
 
 class EventMonitor {
     private var monitor: Any?

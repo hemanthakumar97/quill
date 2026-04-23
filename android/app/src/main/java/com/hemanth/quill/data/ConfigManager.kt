@@ -22,10 +22,6 @@ class ConfigManager(context: Context) {
         get() = prefs.getString("ollama_host", "http://localhost:11434") ?: "http://localhost:11434"
         set(v) = prefs.edit { putString("ollama_host", v) }
 
-    var journalFolderUri: String?
-        get() = prefs.getString("journal_folder_uri", null)
-        set(v) = prefs.edit { if (v != null) putString("journal_folder_uri", v) else remove("journal_folder_uri") }
-
     fun getApiKey(p: AIProvider): String =
         prefs.getString("api_key_${p.name.lowercase()}", "") ?: ""
 
@@ -37,6 +33,10 @@ class ConfigManager(context: Context) {
 
     fun setSelectedModel(p: AIProvider, model: String) =
         prefs.edit { putString("model_${p.name.lowercase()}", model) }
+
+    var journalFolderUri: String?
+        get() = prefs.getString("journal_folder_uri", null)
+        set(v) = prefs.edit { if (v != null) putString("journal_folder_uri", v) else remove("journal_folder_uri") }
 
     fun effectiveModel(p: AIProvider): String {
         val saved = getSelectedModel(p)
