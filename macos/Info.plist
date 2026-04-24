@@ -12,5 +12,9 @@
   <key>NSPrincipalClass</key><string>NSApplication</string>
   <key>LSUIElement</key><true/>
   <key>NSHighResolutionCapable</key><true/>
+  <key>NSSpeechRecognitionUsageDescription</key>
+  <string>Quill needs speech recognition to convert your voice to text for journal entries.</string>
+  <key>NSMicrophoneUsageDescription</key>
+  <string>Quill needs access to your microphone to record your voice for journal entries.</string>
 </dict>
 </plist>

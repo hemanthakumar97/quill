@@ -6,8 +6,10 @@ import androidx.lifecycle.viewModelScope
 import com.hemanth.quill.data.AIManager
 import com.hemanth.quill.data.ConfigManager
 import com.hemanth.quill.data.JournalManager
+import com.hemanth.quill.data.VoiceManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 sealed interface EntryState {
@@ -23,10 +25,35 @@ class QuickEntryViewModel(application: Application) : AndroidViewModel(applicati
     val config = ConfigManager(application)
     private val journal = JournalManager(application, config)
     private val ai = AIManager()
+    private val voiceManager = VoiceManager(application)
 
     val entryText = MutableStateFlow("")
     private val _state = MutableStateFlow<EntryState>(EntryState.Writing)
     val state: StateFlow<EntryState> = _state
+
+    val isListening = voiceManager.isListening
+    val partialText = voiceManager.partialText
+
+    fun toggleListening() {
+        if (isListening.value) {
+            voiceManager.stopListening()
+        } else {
+            voiceManager.startListening(
+                onResults = { result ->
+                    val current = entryText.value.trim()
+                    entryText.value = if (current.isEmpty()) result else "$current $result"
+                },
+                onError = { error ->
+                    _state.value = EntryState.Error(error)
+                }
+            )
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        voiceManager.destroy()
+    }
 
     fun save() {
         val text = entryText.value.trim()

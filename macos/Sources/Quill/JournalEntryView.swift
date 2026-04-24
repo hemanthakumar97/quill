@@ -16,6 +16,8 @@ struct JournalEntryView: View {
     @State private var entryText = ""
     @State private var state: EntryState = .writing
     @FocusState private var editorFocused: Bool
+    
+    @StateObject private var voiceManager = VoiceManager()
 
     @ObservedObject private var cfg = ConfigManager.shared
     private let journal = JournalManager()
@@ -73,7 +75,16 @@ struct JournalEntryView: View {
 
             Divider()
 
-            TextEditor(text: $entryText)
+            ZStack(alignment: .topLeading) {
+                TextEditor(text: Binding(
+                    get: {
+                        if voiceManager.isListening && !voiceManager.partialText.isEmpty {
+                            return entryText + (entryText.isEmpty ? "" : " ") + voiceManager.partialText
+                        }
+                        return entryText
+                    },
+                    set: { entryText = $0 }
+                ))
                 .font(.body)
                 .lineSpacing(4)
                 .frame(minHeight: 250)
@@ -87,6 +98,24 @@ struct JournalEntryView: View {
                     handleSave()
                     return .handled
                 }
+                
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        Button {
+                            toggleVoice()
+                        } label: {
+                            Image(systemName: voiceManager.isListening ? "stop.circle.fill" : "mic.circle.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(voiceManager.isListening ? .red : .accentColor)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(8)
+                        .help(voiceManager.isListening ? "Stop listening" : "Voice input")
+                    }
+                }
+            }
 
             HStack {
                 Text(cfg.config.aiEnabled ? "↵ polish & save  ·  ⇧↵ new line" : "↵ save  ·  ⇧↵ new line")
@@ -95,7 +124,7 @@ struct JournalEntryView: View {
                 Spacer()
                 Button(cfg.config.aiEnabled ? "Polish & Save" : "Save") { handleSave() }
                     .buttonStyle(.borderedProminent)
-                    .disabled(entryText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .disabled(entryText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && voiceManager.partialText.isEmpty)
             }
         }
         .padding(16)
@@ -209,10 +238,33 @@ struct JournalEntryView: View {
     }
 
     // MARK: Actions
+    
+    private func toggleVoice() {
+        if voiceManager.isListening {
+            voiceManager.stopListening()
+        } else {
+            voiceManager.startListening(onResults: { result in
+                let trimmed = entryText.trimmingCharacters(in: .whitespacesAndNewlines)
+                entryText = trimmed.isEmpty ? result : "\(trimmed) \(result)"
+            }, onError: { error in
+                state = .error(error)
+            })
+        }
+    }
 
     private func handleSave() {
-        let trimmed = entryText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let currentText = voiceManager.isListening && !voiceManager.partialText.isEmpty 
+            ? entryText + (entryText.isEmpty ? "" : " ") + voiceManager.partialText 
+            : entryText
+            
+        let trimmed = currentText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
+
+        if voiceManager.isListening {
+            voiceManager.stopListening()
+        }
+        
+        entryText = trimmed
 
         if cfg.config.aiEnabled {
             Task { await runPolish() }
@@ -247,8 +299,8 @@ struct JournalEntryView: View {
 
     private var placeholder: some View {
         Group {
-            if entryText.isEmpty {
-                Text("What's on your mind today?")
+            if entryText.isEmpty && voiceManager.partialText.isEmpty {
+                Text(voiceManager.isListening ? "Listening..." : "What's on your mind today?")
                     .foregroundColor(.secondary)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 8)

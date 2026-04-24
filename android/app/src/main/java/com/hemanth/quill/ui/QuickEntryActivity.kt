@@ -1,26 +1,34 @@
 package com.hemanth.quill.ui
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hemanth.quill.ui.theme.QuillTheme
 import kotlinx.coroutines.delay
@@ -81,6 +89,8 @@ fun QuickEntryScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val entryText by viewModel.entryText.collectAsStateWithLifecycle()
+    val isListening by viewModel.isListening.collectAsStateWithLifecycle()
+    val partialText by viewModel.partialText.collectAsStateWithLifecycle()
 
     Surface(
         shape = MaterialTheme.shapes.large,
@@ -90,11 +100,14 @@ fun QuickEntryScreen(
             when (s) {
                 is EntryState.Writing -> WritingScreen(
                     entryText = entryText,
+                    isListening = isListening,
+                    partialText = partialText,
                     onTextChange = { viewModel.entryText.value = it },
                     aiEnabled = viewModel.config.aiEnabled,
                     providerName = viewModel.config.provider.displayName,
                     onSave = { viewModel.save() },
-                    onOpenSettings = onOpenSettings
+                    onOpenSettings = onOpenSettings,
+                    onToggleMic = { viewModel.toggleListening() }
                 )
                 is EntryState.Polishing -> PolishingScreen(
                     providerName = viewModel.config.provider.displayName
@@ -125,14 +138,26 @@ fun QuickEntryScreen(
 @Composable
 private fun WritingScreen(
     entryText: String,
+    isListening: Boolean,
+    partialText: String,
     onTextChange: (String) -> Unit,
     aiEnabled: Boolean,
     providerName: String,
     onSave: () -> Unit,
-    onOpenSettings: () -> Unit
+    onOpenSettings: () -> Unit,
+    onToggleMic: () -> Unit
 ) {
     val focusRequester = remember { FocusRequester() }
     val today = LocalDate.now().format(DateTimeFormatter.ofPattern("MMMM d, yyyy"))
+    val context = LocalContext.current
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            onToggleMic()
+        }
+    }
 
     Column(modifier = Modifier.padding(16.dp)) {
         Row(
@@ -171,20 +196,43 @@ private fun WritingScreen(
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-        OutlinedTextField(
-            value = entryText,
-            onValueChange = onTextChange,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 140.dp)
-                .focusRequester(focusRequester),
-            placeholder = {
-                Text(
-                    "What's on your mind today?",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+        Box(modifier = Modifier.fillMaxWidth()) {
+            OutlinedTextField(
+                value = if (isListening && partialText.isNotEmpty()) entryText + (if (entryText.isNotEmpty()) " " else "") + partialText else entryText,
+                onValueChange = onTextChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 140.dp)
+                    .focusRequester(focusRequester),
+                placeholder = {
+                    Text(
+                        if (isListening) "Listening..." else "What's on your mind today?",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            )
+            
+            IconButton(
+                onClick = {
+                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                        onToggleMic()
+                    } else {
+                        permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    }
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(4.dp),
+                colors = IconButtonDefaults.iconButtonColors(
+                    contentColor = if (isListening) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Icon(
+                    imageVector = if (isListening) Icons.Default.Stop else Icons.Default.Mic,
+                    contentDescription = "Voice Input"
                 )
             }
-        )
+        }
 
         Spacer(Modifier.height(12.dp))
 
@@ -200,7 +248,7 @@ private fun WritingScreen(
             )
             Button(
                 onClick = onSave,
-                enabled = entryText.isNotBlank()
+                enabled = entryText.isNotBlank() || partialText.isNotBlank()
             ) {
                 Text(if (aiEnabled) "Polish & Save" else "Save")
             }
